@@ -73,6 +73,9 @@ func NewRuntime(ctx context.Context, opts RuntimeOptions) (*Runtime, error) {
 		if cfg.Limits.CommandOutputBytes > 0 {
 			cfg.Cube.CommandOutputBytes = cfg.Limits.CommandOutputBytes
 		}
+		if cfg.Sandbox.AgentUser != "" {
+			cfg.Cube.AgentUser = cfg.Sandbox.AgentUser
+		}
 		cubeProvider, err := cube.New(cfg.Cube, cube.WithLogger(log))
 		if err != nil {
 			return nil, fmt.Errorf("build cubesandbox provider: %w", err)

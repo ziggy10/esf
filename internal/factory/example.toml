@@ -40,6 +40,10 @@ data_dir = "/var/lib/esf/factory"
 # head, mkfifo, and the configured agent binaries. Empty avoids network package
 # installation for every run. A development template may opt in to packages.
 base_packages = []
+# User that agent and probe commands run as inside the sandbox (envd command
+# user). Required by hardening.require_non_root unless the template itself
+# runs as a non-root user. Empty keeps the envd default, root.
+agent_user = ""
 # After repository preparation, egress-managed harnesses switch to
 # deny-by-default. Add only destinations the agent genuinely needs at runtime.
 # The model endpoint is allowed automatically by its L7 injection rule.

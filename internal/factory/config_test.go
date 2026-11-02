@@ -269,6 +269,24 @@ func TestBuildHarnessesRejectsCustomUnrealInvocation(t *testing.T) {
 	}
 }
 
+func TestLoadConfigParsesSandboxAgentUser(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "factory.toml")
+	body := `
+[sandbox]
+agent_user = "svc-agent"
+`
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := LoadConfig(path)
+	if err != nil {
+		t.Fatalf("LoadConfig: %v", err)
+	}
+	if cfg.Sandbox.AgentUser != "svc-agent" {
+		t.Fatalf("agent_user = %q", cfg.Sandbox.AgentUser)
+	}
+}
+
 func TestLoadConfigFile(t *testing.T) {
 	t.Setenv("CUBE_API_URL", "http://127.0.0.1:4000")
 	t.Setenv("CUBE_TEMPLATE_ID", "tpl-test")
@@ -291,6 +309,7 @@ data_dir = "` + dir + `/.factory"
 
 [sandbox]
 base_packages = ["git"]
+agent_user = "taskrunner"
 
 [hardening]
 # This fixture exercises config loading, not egress posture; the fail-closed
@@ -325,6 +344,9 @@ argv = ["./build.sh"]
 	}
 	if cfg.Temporal.TaskQueue != "custom-queue" {
 		t.Fatalf("task_queue = %q", cfg.Temporal.TaskQueue)
+	}
+	if cfg.Sandbox.AgentUser != "taskrunner" {
+		t.Fatalf("sandbox.agent_user = %q", cfg.Sandbox.AgentUser)
 	}
 	if err := cfg.Validate(); err != nil {
 		t.Fatalf("loaded config is invalid: %v", err)

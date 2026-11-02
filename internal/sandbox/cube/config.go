@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -64,6 +65,9 @@ type Config struct {
 	// Version is an operator-recorded Cube release identifier, written into run
 	// metadata when the API does not expose one. Never invented by the factory.
 	Version string `toml:"version"`
+	// AgentUser is the OS user commands run as inside a sandbox. Empty keeps
+	// the envd default (root). The factory maps sandbox.agent_user here.
+	AgentUser string `toml:"agent_user"`
 }
 
 // ConfigFromEnv builds a Config from FACTORY_CUBE_* and the SDK-compatible
@@ -146,6 +150,10 @@ func mergeNonZero(dst *Config, src Config) {
 	}
 }
 
+// agentUserPattern bounds agent_user to characters that are safe in an
+// envd Basic-auth username and within the usual Linux user-name grammar.
+var agentUserPattern = regexp.MustCompile(`^[a-z0-9_-]{1,32}$`)
+
 // Validate rejects a configuration that cannot work, at startup rather than at
 // the first sandbox creation.
 func (c Config) Validate() error {
@@ -177,6 +185,9 @@ func (c Config) Validate() error {
 	}
 	if c.CommandOutputBytes != 0 && c.CommandOutputBytes < 2048 {
 		problems = append(problems, "command_output_bytes must be at least 2048")
+	}
+	if c.AgentUser != "" && !agentUserPattern.MatchString(c.AgentUser) {
+		problems = append(problems, "agent_user must match ^[a-z0-9_-]{1,32}$")
 	}
 	if len(problems) > 0 {
 		return fmt.Errorf("invalid cubesandbox configuration: %s", strings.Join(problems, "; "))

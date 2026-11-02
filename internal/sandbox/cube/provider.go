@@ -278,6 +278,7 @@ func (p *Provider) Create(ctx context.Context, spec sandbox.Spec) (sandbox.Sandb
 		sb:          created,
 		log:         p.log,
 		outputLimit: p.commandOutputLimit(),
+		agentUser:   p.cfg.AgentUser,
 	}, nil
 }
 
@@ -297,6 +298,7 @@ func (p *Provider) Reattach(ctx context.Context, sandboxID string) (sandbox.Sand
 		sb:          sb,
 		log:         p.log,
 		outputLimit: p.commandOutputLimit(),
+		agentUser:   p.cfg.AgentUser,
 	}, nil
 }
 
@@ -351,6 +353,7 @@ type cubeSandbox struct {
 	sb          *cubesandbox.Sandbox
 	log         *slog.Logger
 	outputLimit int64
+	agentUser   string
 }
 
 func (p *Provider) commandOutputLimit() int64 {
@@ -428,6 +431,9 @@ func (s *cubeSandbox) Execute(ctx context.Context, cmd sandbox.Command) (sandbox
 	}
 	if len(cmd.Env) > 0 {
 		opts.Envs = cmd.Env
+	}
+	if s.agentUser != "" {
+		opts.User = s.agentUser
 	}
 
 	started := time.Now().UTC()

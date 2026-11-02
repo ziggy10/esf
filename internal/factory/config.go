@@ -92,6 +92,10 @@ type SandboxConfig struct {
 	// that forgot to declare it.
 	BasePackages []string `toml:"base_packages"`
 
+	// AgentUser is the OS user agent and probe commands run as inside the
+	// sandbox. Empty keeps the provider default (root).
+	AgentUser string `toml:"agent_user"`
+
 	// SetupScript is factory-owned shell code run after BasePackages and before
 	// the agent harness is provisioned.
 	//
@@ -417,6 +421,11 @@ func (c Config) Validate() error {
 	}
 	if err := agentharness.ValidatePackages(c.Sandbox.BasePackages); err != nil {
 		problems = append(problems, "sandbox.base_packages: "+err.Error())
+	}
+	if u := c.Sandbox.AgentUser; u != "" && strings.IndexFunc(u, func(r rune) bool {
+		return !(r >= 'a' && r <= 'z' || r >= '0' && r <= '9' || r == '_' || r == '-')
+	}) >= 0 {
+		problems = append(problems, "sandbox.agent_user must be a plain user name matching [a-z0-9_-]")
 	}
 	for name, h := range c.Harnesses {
 		if kind := strings.ToLower(strings.TrimSpace(h.Type)); kind == "claude" || kind == "codex" {
